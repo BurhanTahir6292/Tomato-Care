@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper: Check if authenticated user has admin role in Firestore
+    function isAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // 1. Users collection: Sensitive personal information (phone, email, role)
+    // Regular users can ONLY read and edit their OWN document.
+    // ONLY admins can query or view other users' records.
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // 2. Treatments: Only Admins can add, edit, or delete treatments
+    match /manage_treatment/{treatmentId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 3. Admin Alerts: Only Admins can broadcast and remove alerts
+    match /admin_alerts/{alertId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 4. FAQs: Only Admins can manage FAQ content
+    match /FAQs/{faqId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 5. Disease Reports: Users can only read their own reports; Admins can review all
+    match /reports/{reportId} {
+      allow read: if isAuthenticated() && (resource.data.userEmail == request.auth.token.email || isAdmin());
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+  }
+}
