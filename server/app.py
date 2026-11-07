@@ -58,31 +58,35 @@ def get_diseases():
 
 @app.route("/api/admin/login", methods=["POST"])
 def admin_login():
-    """Authenticates admin users to access sensitive system details."""
+    """Authenticates admin users to access system details."""
     data = request.get_json(silent=True) or {}
     username = data.get("username", "").strip()
     password = data.get("password", "").strip()
     
-    expected_admin_user = os.environ.get("ADMIN_USER", "admin")
-    expected_admin_pass = os.environ.get("ADMIN_PASSWORD", "admin123")
+    expected_admin_user = os.environ.get("ADMIN_USER", "efoootballlink45@gmail.com")
+    expected_admin_pass = os.environ.get("ADMIN_PASSWORD", "12344321")
     
-    if username == expected_admin_user and password == expected_admin_pass:
+    # Check credentials (case-insensitive for email)
+    is_valid_user = (username.lower() == expected_admin_user.lower())
+    is_valid_pass = (password == expected_admin_pass)
+    
+    if is_valid_user and is_valid_pass:
         return jsonify({
             "status": "success",
             "role": "admin",
             "message": "Admin authorization granted.",
             "token": "admin_auth_token_tomato_care",
             "admin": {
-                "name": "System Administrator",
-                "email": "admin@tomatocare.fyp",
-                "role": "Executive Lead",
-                "session_id": "TC-ADM-8842-SEC"
+                "name": "Administrator",
+                "email": "efoootballlink45@gmail.com",
+                "role": "Admin",
+                "session_id": "ADM-101"
             }
         }), 200
     
     return jsonify({
         "status": "error",
-        "message": "Invalid administrator credentials. Access restricted."
+        "message": "Invalid email or password. Access restricted."
     }), 401
 
 
